@@ -6,11 +6,14 @@ Prints a lot of interesting data into the console
 
 Requires jstd.html to be in the same directory as jsTestDriver.conf
 
+If you are not using an external assert library like hamcrest, you will need to include the Assert.js from jstestdriver source
+This is in the support directory. Simply creating a link tag in jstd.html should be sufficient.
+
 You must also start a server at the project root (so the server can see the src and test directories).
 A customised python server is provided for this purpose
 
 start the python server
-$ pythom -m JstdServer 8100
+$ python -m JstdServer 8100
 
 
 open the test file
