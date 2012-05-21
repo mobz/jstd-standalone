@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Standalone JSTestRunner</title>
+		<link rel="icon" href="favicon.png">
+		<!-- standalone runner -->
+		<script>
+		(function() {
+			var t0 = Date.now();
+			
+			var args = location.search.substring(1).split("&").reduce(function(r, p) {
+				r[decodeURIComponent(p.split("=")[0])] = decodeURIComponent(p.split("=")[1]); return r;
+			}, {});
+			
+			var global = this;
+			var doc = global.document;
+			var script0 = doc.getElementsByTagName('script')[0];
+			var suites = [];
+			var realSetTimeout = global.setTimeout;
+			
+			global.TestCase = function( suite_name ) {
+				var s = function(){ };
+				suites.push( { con: s, name: suite_name });
+				return s;
+			};
+			
+			function run_suite() {
+				var total = 0, fail = 0, error = 0;
+				console.log("starting " + suites.length + " suite" + ( suites.length === 1 ? "" : "s" ));
+				suites.forEach( function( s ) {
+					console.log("running " + s.name );
+					var suite = new s.con();
+					for( var test in suite ) {
+						if( /^test/.test( test ) ) {
+							try {
+								total++;
+								console.log("  " + test );
+								("setUp" in suite) && suite["setUp"]();
+								suite[test]();
+								("tearDown" in suite) && suite["tearDown"]();
+							} catch( e ) {
+								if( e.name === "AssertError" ) {
+									fail++;
+									console.log("AssertError", e);
+									console.log(e.stack);
+								} else {
+									error++;
+									console.log("Unexpected Error", e );
+									console.log(e.stack);
+								}
+							}
+						}
+					}
+				});
+				console.log( "ran", total, "tests in", Date.now() - t0, "ms" );
+				console.log( "passed:", ( total - fail - error ), "failed:", fail, "error:", error);
+				document.body.style.backgroundColor = (fail + error === 0) ? 'green' : 'red';
+				if(args["autotest"] === "true" ) {
+					console.log("autotest");
+					realSetTimeout( function() {
+						window.location.reload();
+					}, 1000);
+				}
+			}
+
+			var scripts = (function() {
+				var scripts = {
+					load: [],
+					test: []
+				};
+				return {
+					add: function( type, src ) {
+						scripts[ type ].push( src );
+					},
+					get: function( type ) {
+						return scripts[ type ];
+					}
+				};
+			})();
+			var loaded = [];
+			
+			function load_scripts( scripts ) {
+				load_script( scripts.shift() );
+				
+				function load_script( src ) {
+					var st0 = Date.now();
+					if( !src ) {
+						console.log("loaded " + loaded.length + " scripts: ", { scripts: loaded } );
+						run_suite();
+						return;
+					}
+					var s = doc.createElement('script');
+					s.type = 'text/javascript';
+					s.src = src;
+					s.onload = function() {
+						loaded.push( "loaded " + src + " in " + ( Date.now() - st0 ) + "ms" );
+						load_script( scripts.shift() );
+					}
+					script0.parentNode.insertBefore(s, script0);
+				}
+			}
+			
+			function printTest( test ) {
+				var li = document.createElement("LI");
+				li.innerHTML = "<a href=\"jstd.html?test=" + encodeURIComponent( test ) + "\">" + test + "</a>";
+				document.body.appendChild(li);
+			}
+			
+			function listTests( scripts ) {
+				scripts.forEach( function( test ) {
+					var spec = test.match( /^([^*]+)(\*(.*))?$/ );
+					if( spec[2] ) {
+						getDirList( spec[1], spec[3] );
+					} else {
+						printTest( spec[1] );
+					}
+				});
+			}
+			
+			function getDirList( dir, ext ) {
+				var xhr = new XMLHttpRequest();
+				xhr.open( "GET", dir );
+				xhr.onreadystatechange = function() {
+					if( xhr.readyState === 4 ) {
+						var list = JSON.parse( xhr.responseText );
+						list.files.forEach( function( file ) {
+							if(file.indexOf( ext ) === ( file.length - ext.length ) ) {
+								printTest( dir + file );
+							}
+						});
+					}
+				}
+				xhr.send();
+			}
+			
+			function load_jstd_conf() {
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET", "jsTestDriver.conf");
+				xhr.onreadystatechange = function() {
+					if( xhr.readyState === 4 ) {
+						var data = xhr.responseText;
+						var mode = null;
+						data.split(/\n/).forEach( function( line ) {
+							if( /^load/.test( line ) ) {
+								mode = 'load';
+							} else if( /^test/.test( line ) ) {
+								mode = 'test';
+							} else if( /^\s-\s/.test( line ) ) {
+								scripts.add( mode, line.match( /\s-\s(\S+)/ )[1] );
+							}
+						});
+						if( args["test"] ) {
+							scripts.add( 'load', args["test"] );
+							load_scripts( scripts.get( 'load' ) );
+						} else {
+							listTests( scripts.get( 'test' ) );
+						}
+					}
+				};
+				xhr.send();
+			}
+			
+			load_jstd_conf();
+		})();
+		</script>
+	</head>
+	<body></body>
+</html>
+
+

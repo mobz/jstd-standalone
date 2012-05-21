@@ -1,0 +1,19 @@
+= Standlone Test Runner for JsTestDriver tests =
+
+Allows you to run jsTestDriver tests directly in a browser
+
+Prints a lot of interesting data into the console
+
+Requires jstd.html to be in the same directory as jsTestDriver.conf
+
+You must also start a server at the project root (so the server can see the src and test directories).
+A customised python server is provided for this purpose
+
+start the python server
+$ pythom -m JstdServer 8100
+
+
+open the test file
+$ open http://localhost:8100/jstd.html
+
+ 
