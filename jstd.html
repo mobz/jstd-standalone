@@ -18,8 +18,11 @@
 			var suites = [];
 			var realSetTimeout = global.setTimeout;
 			
-			global.TestCase = function( suite_name ) {
+			global.TestCase = function( suite_name, proto ) {
 				var s = function(){ };
+				if( proto ) {
+					s.prototype = proto;
+				}
 				suites.push( { con: s, name: suite_name });
 				return s;
 			};

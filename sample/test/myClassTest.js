@@ -1,6 +1,4 @@
-var MyClassTest = TestCase("MyClass");
-
-MyClassTest.prototype = {
+TestCase("MyClass", {
 	"test that walk() produces positive speed": function() {
 		var p = new MyClass();
 		p.walk();
@@ -14,4 +12,4 @@ MyClassTest.prototype = {
 
 		assertThat( p.getSpeed(), equalTo( 0 ) );
 	}
-}
+});
