@@ -148,8 +148,8 @@
 								mode = 'load';
 							} else if( /^test/.test( line ) ) {
 								mode = 'test';
-							} else if( /^\s-\s/.test( line ) ) {
-								scripts.add( mode, line.match( /\s-\s(\S+)/ )[1] );
+							} else if( /^\s+-\s/.test( line ) ) {
+								scripts.add( mode, line.match( /\s+-\s(\S+)/ )[1] );
 							}
 						});
 						if( args["test"] ) {
